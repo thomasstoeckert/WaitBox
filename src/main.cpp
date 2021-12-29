@@ -6,6 +6,8 @@
 #include "managers/WaitTimesManager.h"
 #include "managers/DisplayManager.h"
 
+#include "models/ConfigurationSettings.h"
+
 #define SLEEP_MINUTES(minutes) (minutes * 60 * 1000)
 
 ConfigurationManager configurationManager;
@@ -42,7 +44,10 @@ void loop()
 
     // Fetch the latest wait times information from the server
     Serial.println("Fetching updates information from the server");
-    waitTimesManager.updateData();
+
+    ConfigurationSettings latestSettings = configurationManager.getCurrentSettings();
+
+    waitTimesManager.updateData(latestSettings);
 
     // Update the display
     Serial.println("Drawing a dummy screen");

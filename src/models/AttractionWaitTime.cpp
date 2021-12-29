@@ -1,11 +1,12 @@
 #include "AttractionWaitTime.h"
 
-AttractionWaitTime::AttractionWaitTime(const char* inEntityID, const char* inName, const char* inStatus, int inWait) 
+AttractionWaitTime::AttractionWaitTime(const char* inEntityID, const char* inName, const char* inStatus, const char* inType, int inWait) 
 {
     // Copy over string data
     entityID = String(inEntityID);
     name     = String(inName);
     status   = String(inStatus);
+    type     = String(inType);
 
     // Copy data over for wait
     wait = inWait;
@@ -21,7 +22,10 @@ AttractionWaitTime::AttractionWaitTime(JsonObject jsonData)
     name = (!inputName.isNull()) ? String(inputName.as<const char*>()) : String("Name Missing");
 
     JsonVariant inputStatus = jsonData["status"];
-    name = (!inputStatus.isNull()) ? String(inputStatus.as<const char*>()) : String("Status Missing");
+    status = (!inputStatus.isNull()) ? String(inputStatus.as<const char*>()) : String("Status Missing");
+
+    JsonVariant inputType = jsonData["entityType"];
+    type = (!inputType.isNull()) ? String(inputType.as<const char*>()) : String("Type Missing");
 
     JsonVariant inputWait = jsonData["queue"]["STANDBY"]["waitTime"];
     wait = (!inputWait.isNull()) ? inputWait.as<int>() : -1;
@@ -40,6 +44,11 @@ String AttractionWaitTime::getName()
 String AttractionWaitTime::getStatus()
 {
     return status;
+}
+
+String AttractionWaitTime::getType()
+{
+    return type;
 }
 
 int AttractionWaitTime::getWait()

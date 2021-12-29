@@ -1,4 +1,4 @@
-#include <string.h>
+#include "../models/ConfigurationSettings.h"
 
 class ConfigurationManager 
 {
@@ -10,7 +10,11 @@ class ConfigurationManager
 
         void loadSettings();
 
+        ConfigurationSettings getCurrentSettings();
+
     private:
+        ConfigurationSettings configurationSettings;
+
         static const char* SELECTED_ATTRACTIONS_1[];
         static const char* SELECTED_ATTRACTIONS_2[];
         static const char* SELECTED_ATTRACTIONS_3[];

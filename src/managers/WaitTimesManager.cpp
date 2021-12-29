@@ -1,30 +1,21 @@
 #include "WaitTimesManager.h"
 
 WaitTimesManager::WaitTimesManager() :
-    webResponseBuffer(32000)
+    webResponseBuffer(32000), parkWaitTimes{ParkWaitTime(), ParkWaitTime(), ParkWaitTime(), ParkWaitTime()}
 {
     // Prepare our JSON filter
 
     // Keep park entity IDs in park live data responses
-    attractionResultFilter["id"] = true;
-    
-    // Keep attraction names, IDs, status, and standby queue wait times
-    JsonObject attractionResultFilterLiveData = attractionResultFilter["liveData"].createNestedObject();
-    attractionResultFilterLiveData["name"] = true;
-    attractionResultFilterLiveData["entityType"] = true;
-    attractionResultFilterLiveData["status"] = true;
-    JsonObject attractionResultFilterStandby = attractionResultFilterLiveData["queue"].createNestedObject("STANDBY");
-    attractionResultFilterStandby["waitTime"] = true;
-
+    deserializeJson(attractionResultFilter, FILTER_STRING, DeserializationOption::NestingLimit(15));
 }
 
 void WaitTimesManager::init()
 {
     // Fetch all parks list from server (Eventually)
-    serializeJsonPretty(attractionResultFilter, Serial);
+    //serializeJsonPretty(attractionResultFilter, Serial);
 }
 
-bool WaitTimesManager::updateData()
+bool WaitTimesManager::updateData(ConfigurationSettings configSettings)
 {
     // Fetch data from our selected parks/attractions, feeding them
     // into our data structures.
@@ -36,10 +27,32 @@ bool WaitTimesManager::updateData()
     fetchParkWaits("75ea578a-adc8-4116-a54d-dccb60765ef9");
 
     // Print the result
-    serializeJsonPretty(webResponseBuffer, Serial);
-    Serial.println();
+    //serializeJsonPretty(webResponseBuffer, Serial);
+    //Serial.println();
 
-    return false;
+    // Parse it into a park
+    ParkWaitTime parsedPark = ParkWaitTime(webResponseBuffer.as<JsonObject>(), configSettings);
+
+    // Print out our response
+    Serial.println("Wait Times Object Result: ");
+    Serial.printf("\tParkID: %s\n", parsedPark.getEntityID().c_str());
+    Serial.printf("\tNumAttractions: %d\n", parsedPark.getNumAttractions());
+
+    Serial.printf("Attractions:\n");
+    int numAttractions = parsedPark.getNumAttractions();
+
+    for(int i = 0; i < numAttractions; i++)
+    {
+        AttractionWaitTime attr = parsedPark.getAttractionWaitTime(i);
+        Serial.printf("I: %2d | ID: %s, Name: %s, Type: %s, Status: %s, Wait: %d\n",
+            i, attr.getEntityID().c_str(), attr.getName().c_str(), attr.getType().c_str(), attr.getStatus().c_str(), attr.getWait());
+    }
+
+    // Store this park object
+    parkWaitTimes[0] = parsedPark;
+
+
+    return true;
 }
 
 bool WaitTimesManager::fetchParkWaits(const char* parkID)
@@ -66,6 +79,7 @@ bool WaitTimesManager::fetchParkWaits(const char* parkID)
 
     int statusCode = http.sendRequest("GET");
 
+    Serial.printf("Got our response code of %d\n", statusCode);
     Serial.println("Request sent. Parsing...");
 
     DeserializationError error = deserializeJson(webResponseBuffer, 

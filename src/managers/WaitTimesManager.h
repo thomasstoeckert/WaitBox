@@ -4,12 +4,16 @@
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 
+#include "../models/ParkWaitTime.h"
+#include "../models/AttractionWaitTime.h"
+#include "../models/ConfigurationSettings.h"
+
 class WaitTimesManager
 {
 public:
     WaitTimesManager();
     void init();
-    bool updateData();
+    bool updateData(ConfigurationSettings configSettings);
     //WaitTimes fetchWaitTimes
 
 private:
@@ -20,9 +24,12 @@ private:
 
     // Our results filter for attraction responses is small, constant, and
     // used pretty much everywhere.
-    StaticJsonDocument<128> attractionResultFilter;
+    StaticJsonDocument<256> attractionResultFilter;
 
     // WaitTimes Cache
+    // We hold up to four park objects at a time
+    const int numParks = 4;
+    std::array<ParkWaitTime, 4> parkWaitTimes;
 
     // Utility Functions
     bool fetchParkWaits(const char* parkID);
@@ -34,6 +41,8 @@ private:
     static constexpr const char* slugEntity = "entity/";
     static constexpr const char* slugLive ="/live";
     static constexpr const char* headerKeys[] = {"Location", "Date", "Content-Type", "Server", "cf-ray"};
+    static constexpr const char* FILTER_STRING = R""""({"id": true, "liveData": [{"id": true, "name": true, "entityType": true, "status": true, "queue": {"STANDBY": true}]})"""";
+
 
     // Our HTTPS Certificate
     static constexpr const char *root_ca = R""""(

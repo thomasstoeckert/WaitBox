@@ -41,4 +41,10 @@ ConfigurationManager::ConfigurationManager()
 void ConfigurationManager::loadSettings()
 {
     // Do nothing - we don't need to load anything in our current version
+    configurationSettings = ConfigurationSettings();
+}
+
+ConfigurationSettings ConfigurationManager::getCurrentSettings()
+{
+    return configurationSettings;
 }

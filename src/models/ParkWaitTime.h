@@ -1,22 +1,29 @@
+#pragma once
+
 #include <ArduinoJson.h>
 
 #include "AttractionWaitTime.h"
+#include "ConfigurationSettings.h"
+
+#define TYPE_ATTRACTION "ATTRACTION"
+#define TYPE_SHOW       "SHOW"
 
 class ParkWaitTime
 {
     public:
         // Constructors
-        ParkWaitTime(JsonObject jsonData);
-        ParkWaitTime(const char* inEntityID, AttractionWaitTime* inAttractions);
+        ParkWaitTime();
+        ParkWaitTime(JsonObject jsonData, ConfigurationSettings configSettings = ConfigurationSettings());
+        ParkWaitTime(const char* inEntityID, std::vector<AttractionWaitTime> inAttractions);
 
         // Getters
         String getEntityID();
         int getNumAttractions();
-        AttractionWaitTime* getAttractionWaitTimes();
+        std::vector<AttractionWaitTime> getAttractionWaitTimes();
         AttractionWaitTime  getAttractionWaitTime(int index);
     
     private:
         String entityID;
-        AttractionWaitTime* attractions;
+        std::vector<AttractionWaitTime> attractions;
         int numAttractions;
 };
