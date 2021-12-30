@@ -116,7 +116,7 @@ void DisplayManager::drawAttraction(AttractionWaitTime attr, int x, int y)
     display.setTextColor(EPD_BLACK);
 
     // Draw our spacer
-    display.print("| ");
+    display.print("|");
 
     // Draw the label
     display.print(attr.getName());
