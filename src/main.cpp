@@ -42,16 +42,18 @@ void loop()
     // Every 180s (three minutes)...
     Serial.println("\nWaking Up - Beginning fixed update");
 
-    // Fetch the latest wait times information from the server
-    Serial.println("Fetching updates information from the server");
-
     ConfigurationSettings latestSettings = configurationManager.getCurrentSettings();
 
+    // Fetch the latest wait times information from the server
+    Serial.println("Fetching updates information from the server");
     waitTimesManager.updateData(latestSettings);
+
+    std::array<ParkWaitTime, 4> latestWaits = waitTimesManager.getWaitTimes();
 
     // Update the display
     Serial.println("Drawing a dummy screen");
-    displayManager.drawDummyScreen();
+    //displayManager.drawDummyScreen();
+    displayManager.drawSimpleWaits(latestWaits);
 
     // Go back to sleep for three minutes
     Serial.println("Fixed update complete. Going back to sleep.");

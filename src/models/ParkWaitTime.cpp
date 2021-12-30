@@ -3,23 +3,23 @@
 ParkWaitTime::ParkWaitTime()
 {
     // Assign some dummy values
-    entityID = String("Dummy Park");
+    name = String("Dummy Park");
     attractions = std::vector<AttractionWaitTime>();
 }
 
-ParkWaitTime::ParkWaitTime(const char *inEntityID, std::vector<AttractionWaitTime> inAttractions)
+ParkWaitTime::ParkWaitTime(const char *inName, std::vector<AttractionWaitTime> inAttractions)
 {
     // Copy the park ID over
-    entityID = String(inEntityID);
+    name = String(inName);
 
     // Copy the attractions list over
     attractions = inAttractions;
 }
 
-ParkWaitTime::ParkWaitTime(JsonObject jsonData, ConfigurationSettings configSettings)
+ParkWaitTime::ParkWaitTime(JsonObject jsonData, ConfigurationSettings configSettings, int parkIndex)
 {
     // Copy our park ID over
-    entityID = String(jsonData["id"].as<const char *>());
+    name = String(jsonData["name"].as<const char *>());
 
     // Get our list of attractions
     JsonArray attractionData = jsonData["liveData"].as<JsonArray>();
@@ -31,10 +31,11 @@ ParkWaitTime::ParkWaitTime(JsonObject jsonData, ConfigurationSettings configSett
     // Allocate space in our array - we won't use it all, but that's okay for now.
     attractions = std::vector<AttractionWaitTime>();
 
+    std::vector<String> attractionFilters = configSettings.getAttractionFilterForPark(parkIndex);
+
     // Loop through each attraction, parsing it, and storing it
     for (int i = 0; i < lenAttractionData; i++)
     {
-
         // Parse the data
         JsonObject singleAttractionData = attractionData[i].as<JsonObject>();
         AttractionWaitTime parsedAttraction = AttractionWaitTime(singleAttractionData);
@@ -47,7 +48,6 @@ ParkWaitTime::ParkWaitTime(JsonObject jsonData, ConfigurationSettings configSett
         if (parsedAttractionType == TYPE_ATTRACTION &&
             !configSettings.getShowAttractions())
         {
-            Serial.println("Attractions Disabled");
             continue;
         };
 
@@ -55,7 +55,6 @@ ParkWaitTime::ParkWaitTime(JsonObject jsonData, ConfigurationSettings configSett
         if (parsedAttractionType == TYPE_SHOW &&
             !configSettings.getShowShows())
         {
-            Serial.println("Shows Disabled");
             continue;
         };
 
@@ -63,20 +62,18 @@ ParkWaitTime::ParkWaitTime(JsonObject jsonData, ConfigurationSettings configSett
         if (parsedAttractionType != TYPE_ATTRACTION &&
             parsedAttractionType != TYPE_SHOW && !configSettings.getShowOthers())
         {
-            Serial.println("Others Disabled");
             continue;
         };
-        ;
 
         // Check against this attraction's ID
-        if (configSettings.getNumFilters() > 0)
+        if (attractionFilters.size() > 0)
         {
             bool isInFilter = false;
             // For all IDs in filter,
-            for (int j = 0; j < configSettings.getNumFilters(); j++)
+            for (int j = 0; j < attractionFilters.size(); j++)
             {
                 // If our ID is found, mark as found and break
-                if (parsedAttraction.getEntityID() == configSettings.getFilter(j))
+                if (parsedAttraction.getEntityID() == attractionFilters[j])
                 {
                     isInFilter = true;
                     break;
@@ -85,7 +82,6 @@ ParkWaitTime::ParkWaitTime(JsonObject jsonData, ConfigurationSettings configSett
 
             if (!isInFilter)
             {
-                Serial.println("Not in filter");
                 continue;
             };
         }
@@ -98,9 +94,9 @@ ParkWaitTime::ParkWaitTime(JsonObject jsonData, ConfigurationSettings configSett
     numAttractions = attractionCount;
 }
 
-String ParkWaitTime::getEntityID()
+String ParkWaitTime::getName()
 {
-    return entityID;
+    return name;
 }
 
 int ParkWaitTime::getNumAttractions()

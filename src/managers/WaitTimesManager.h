@@ -14,7 +14,7 @@ public:
     WaitTimesManager();
     void init();
     bool updateData(ConfigurationSettings configSettings);
-    //WaitTimes fetchWaitTimes
+    std::array<ParkWaitTime, 4> getWaitTimes();
 
 private:
     // This larger JSON document holds the responses from our web requests
@@ -41,7 +41,7 @@ private:
     static constexpr const char* slugEntity = "entity/";
     static constexpr const char* slugLive ="/live";
     static constexpr const char* headerKeys[] = {"Location", "Date", "Content-Type", "Server", "cf-ray"};
-    static constexpr const char* FILTER_STRING = R""""({"id": true, "liveData": [{"id": true, "name": true, "entityType": true, "status": true, "queue": {"STANDBY": true}]})"""";
+    static constexpr const char* FILTER_STRING = R""""({"name": true, "liveData": [{"id": true, "name": true, "entityType": true, "status": true, "queue": {"STANDBY": true}]})"""";
 
 
     // Our HTTPS Certificate

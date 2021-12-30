@@ -10,13 +10,16 @@ class ConfigurationSettings
         bool getShowAttractions();
         bool getShowShows();
         bool getShowOthers();
-        int getNumFilters();
 
-        String getFilter(int i);
+        int getNumParks();
+        String getSelectedParkID(int parkIndex);
+        
+        std::vector<String> getAttractionFilterForPark(int parkIndex);
     private:
         bool showAttractions;
         bool showShows;
         bool showOthers;
-        int numFilters;
-        std::vector<String> filters;
+
+        std::vector<String> parkFilters;
+        std::vector<std::vector<String>> attractionFilters;
 };

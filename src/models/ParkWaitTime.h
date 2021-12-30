@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ArduinoJson.h>
+#include <array>
 
 #include "AttractionWaitTime.h"
 #include "ConfigurationSettings.h"
@@ -13,17 +14,17 @@ class ParkWaitTime
     public:
         // Constructors
         ParkWaitTime();
-        ParkWaitTime(JsonObject jsonData, ConfigurationSettings configSettings = ConfigurationSettings());
+        ParkWaitTime(JsonObject jsonData, ConfigurationSettings configSettings = ConfigurationSettings(), int parkIndex = 0);
         ParkWaitTime(const char* inEntityID, std::vector<AttractionWaitTime> inAttractions);
 
         // Getters
-        String getEntityID();
+        String getName();
         int getNumAttractions();
         std::vector<AttractionWaitTime> getAttractionWaitTimes();
         AttractionWaitTime  getAttractionWaitTime(int index);
     
     private:
-        String entityID;
+        String name;
         std::vector<AttractionWaitTime> attractions;
         int numAttractions;
 };

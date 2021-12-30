@@ -14,6 +14,82 @@ void DisplayManager::setup()
     display.setRotation(1);
 }
 
+
+void DisplayManager::drawSimpleWaits(std::array<ParkWaitTime, 4> waitTimes)
+{
+    // Clear the buffer
+    display.clearBuffer();
+
+    // Margin on x/y axes
+    const int MARGIN = 1;
+    const int ROW_MARGIN = 4;
+    const int TEXT_HEIGHT = 8;
+
+    // Configure text things
+    display.setTextSize(1);
+    display.setTextColor(EPD_BLACK);
+    display.setTextWrap(true);
+
+    int numParks = 4;
+    int currentRowNumber = 0;
+    for(int i = 0; i < numParks; i++)
+    {
+        ParkWaitTime park = waitTimes[i];
+
+        // Print park name
+        display.setTextColor(EPD_RED);
+        display.setCursor(MARGIN, TEXT_HEIGHT * (currentRowNumber++) + MARGIN + i * ROW_MARGIN);
+        display.print(park.getName());
+        display.setTextColor(EPD_BLACK);
+
+        int overflowLines = park.getName().length() / 21;
+        currentRowNumber += overflowLines;
+
+        for (int j = 0; j < park.getNumAttractions(); j++)
+        {
+            // Get a reference to our attraction
+            AttractionWaitTime attr = park.getAttractionWaitTime(j);
+
+            // Draw the label
+            display.setCursor(MARGIN, TEXT_HEIGHT * (currentRowNumber++) + MARGIN + i * ROW_MARGIN);
+            display.print(attr.getName() + String(" | "));
+
+            int drawnLength = attr.getName().length() + 3;
+
+
+            // Draw the status / wait
+            display.setTextColor(EPD_RED);
+            if(attr.getStatus() == "OPERATING")
+            {
+                display.print(String(attr.getWait()));
+                drawnLength += String(attr.getWait()).length();
+            } else
+            {
+                display.print(attr.getStatus());
+                drawnLength += attr.getStatus().length();
+            }
+            
+            display.setTextColor(EPD_BLACK);
+
+            // Calculate overflow
+            currentRowNumber += drawnLength / 21;
+        }
+        
+        // Draw a dividing line
+        if(i != (numParks - 1))
+        {
+            display.fillRect(1, TEXT_HEIGHT * (currentRowNumber++) + MARGIN + i * ROW_MARGIN + 4, 126, 2, EPD_RED);
+        }
+    }
+
+    // Draw a little timestamp to the bottom of the display
+    display.setCursor(1, 296 - 8);
+    display.print(String(millis() / 60000).c_str());
+
+    // Tell the display to update
+    display.display();
+}
+
 void DisplayManager::drawDummyScreen()
 {
     // Clear the buffer

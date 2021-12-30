@@ -1,5 +1,9 @@
+#include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_ThinkInk.h>
+#include <array>
+
+#include "../models/ParkWaitTime.h"
 
 #define EPD_DC    26  // Pin 26 - [Out] Data / Command pin on display
 #define EPD_CS    27  // Pin 27 - [Out] Display Chip Select
@@ -15,6 +19,7 @@ class DisplayManager
         void setup();
 
         void drawDummyScreen();
+        void drawSimpleWaits(std::array<ParkWaitTime, 4> waitTimes);
 
     private:
         ThinkInk_290_Tricolor_Z10 display;

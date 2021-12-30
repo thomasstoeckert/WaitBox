@@ -21,37 +21,27 @@ bool WaitTimesManager::updateData(ConfigurationSettings configSettings)
     // into our data structures.
 
     // For each park...
-
-    // Fetch the data from the web, parsed into JSON
-    // Move that into our data structures
-    fetchParkWaits("75ea578a-adc8-4116-a54d-dccb60765ef9");
-
-    // Print the result
-    //serializeJsonPretty(webResponseBuffer, Serial);
-    //Serial.println();
-
-    // Parse it into a park
-    ParkWaitTime parsedPark = ParkWaitTime(webResponseBuffer.as<JsonObject>(), configSettings);
-
-    // Print out our response
-    Serial.println("Wait Times Object Result: ");
-    Serial.printf("\tParkID: %s\n", parsedPark.getEntityID().c_str());
-    Serial.printf("\tNumAttractions: %d\n", parsedPark.getNumAttractions());
-
-    Serial.printf("Attractions:\n");
-    int numAttractions = parsedPark.getNumAttractions();
-
-    for(int i = 0; i < numAttractions; i++)
+    int numParks = configSettings.getNumParks();
+    for(int i = 0; i < numParks; i++)
     {
-        AttractionWaitTime attr = parsedPark.getAttractionWaitTime(i);
-        Serial.printf("I: %2d | ID: %s, Name: %s, Type: %s, Status: %s, Wait: %d\n",
-            i, attr.getEntityID().c_str(), attr.getName().c_str(), attr.getType().c_str(), attr.getStatus().c_str(), attr.getWait());
+        // Fetch the data from the web, parsed into JSON
+        fetchParkWaits(configSettings.getSelectedParkID(i).c_str());
+
+        ////// Move that into our data structures //////
+        
+        // Parse it into a park
+        ParkWaitTime parsedPark = ParkWaitTime(webResponseBuffer.as<JsonObject>(), configSettings, i);
+
+        // Print out our response
+        Serial.println("Wait Times Object Result: ");
+        Serial.printf("\tParkName: %s\n", parsedPark.getName().c_str());
+        Serial.printf("\tNumAttractions: %d\n", parsedPark.getNumAttractions());
+
+        // Store this park object
+        parkWaitTimes[i] = parsedPark;
     }
 
-    // Store this park object
-    parkWaitTimes[0] = parsedPark;
-
-
+    
     return true;
 }
 
@@ -101,3 +91,7 @@ bool WaitTimesManager::fetchParkWaits(const char* parkID)
     return true;
 }
 
+std::array<ParkWaitTime, 4> WaitTimesManager::getWaitTimes()
+{
+    return parkWaitTimes;
+}
