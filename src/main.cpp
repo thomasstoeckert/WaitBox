@@ -53,7 +53,7 @@ void loop()
     // Update the display
     Serial.println("Drawing a dummy screen");
     //displayManager.drawDummyScreen();
-    displayManager.drawSimpleWaits(latestWaits);
+    displayManager.drawWaits(latestWaits);
 
     // Go back to sleep for three minutes
     Serial.println("Fixed update complete. Going back to sleep.");

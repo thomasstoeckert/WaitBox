@@ -18,11 +18,10 @@ class DisplayManager
         DisplayManager();
         void setup();
 
-        void drawDummyScreen();
-        void drawSimpleWaits(std::array<ParkWaitTime, 4> waitTimes);
+        void drawWaits(std::array<ParkWaitTime, 4> waitTimes);
 
     private:
         ThinkInk_290_Tricolor_Z10 display;
 
-        void drawDataColumn(int xOffset, int yOffset, const char* label);
+        void drawAttraction(AttractionWaitTime attr, int x, int y);
 };

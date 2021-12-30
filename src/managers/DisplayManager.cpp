@@ -14,8 +14,7 @@ void DisplayManager::setup()
     display.setRotation(1);
 }
 
-
-void DisplayManager::drawSimpleWaits(std::array<ParkWaitTime, 4> waitTimes)
+void DisplayManager::drawWaits(std::array<ParkWaitTime, 4> waitTimes)
 {
     // Clear the buffer
     display.clearBuffer();
@@ -28,11 +27,11 @@ void DisplayManager::drawSimpleWaits(std::array<ParkWaitTime, 4> waitTimes)
     // Configure text things
     display.setTextSize(1);
     display.setTextColor(EPD_BLACK);
-    display.setTextWrap(true);
+    display.setTextWrap(false);
 
     int numParks = 4;
-    int currentRowNumber = 0;
-    for(int i = 0; i < numParks; i++)
+    int currentRowNumber = 1;
+    for (int i = 0; i < numParks; i++)
     {
         ParkWaitTime park = waitTimes[i];
 
@@ -42,41 +41,19 @@ void DisplayManager::drawSimpleWaits(std::array<ParkWaitTime, 4> waitTimes)
         display.print(park.getName());
         display.setTextColor(EPD_BLACK);
 
-        int overflowLines = park.getName().length() / 21;
-        currentRowNumber += overflowLines;
+        // Park names get an extra row as a treat.
+        currentRowNumber++;
 
         for (int j = 0; j < park.getNumAttractions(); j++)
         {
             // Get a reference to our attraction
             AttractionWaitTime attr = park.getAttractionWaitTime(j);
 
-            // Draw the label
-            display.setCursor(MARGIN, TEXT_HEIGHT * (currentRowNumber++) + MARGIN + i * ROW_MARGIN);
-            display.print(attr.getName() + String(" | "));
-
-            int drawnLength = attr.getName().length() + 3;
-
-
-            // Draw the status / wait
-            display.setTextColor(EPD_RED);
-            if(attr.getStatus() == "OPERATING")
-            {
-                display.print(String(attr.getWait()));
-                drawnLength += String(attr.getWait()).length();
-            } else
-            {
-                display.print(attr.getStatus());
-                drawnLength += attr.getStatus().length();
-            }
-            
-            display.setTextColor(EPD_BLACK);
-
-            // Calculate overflow
-            currentRowNumber += drawnLength / 21;
+            drawAttraction(attr, MARGIN, TEXT_HEIGHT * (currentRowNumber++) + MARGIN + i * ROW_MARGIN);
         }
-        
+
         // Draw a dividing line
-        if(i != (numParks - 1))
+        if (i != (numParks - 1))
         {
             display.fillRect(1, TEXT_HEIGHT * (currentRowNumber++) + MARGIN + i * ROW_MARGIN + 4, 126, 2, EPD_RED);
         }
@@ -90,49 +67,57 @@ void DisplayManager::drawSimpleWaits(std::array<ParkWaitTime, 4> waitTimes)
     display.display();
 }
 
-void DisplayManager::drawDummyScreen()
+void DisplayManager::drawAttraction(AttractionWaitTime attr, int x, int y)
 {
-    // Clear the buffer
-    display.clearBuffer();
+    // Move our cursor to this position
+    display.setCursor(x, y);
 
-    // The margin on x/y axes
-    const int MARGIN = 6;
-    const int COLUMN_WIDTH = 71;
+    // First: Draw the wait time or status of the attraction, limited to three
+    // characters.
 
-    const char *labels[] = {
-        "Magic Kingdom",
-        "EPCOT",
-        "DHS",
-        "Animal Kingdom"};
-
-    // Draw each column to the buffer
-    for (int i = 0; i < 4; i++)
+    display.setTextColor(EPD_RED);
+    if (attr.getStatus() == "OPERATING" && attr.getWait() > 0)
     {
-        drawDataColumn(MARGIN, MARGIN + i * COLUMN_WIDTH, labels[i]);
+        // If the attraction is operating, the important info is its wait time.
+        // Get it, and if it's too short, pad it on the left side.
+
+        String timeString = String(attr.getWait());
+        if (timeString.length() < 3)
+        {
+            int toPad = 3 - timeString.length();
+
+            for (int k = 0; k < toPad; k++)
+            {
+                timeString = " " + timeString;
+            }
+        }
+
+        display.print(timeString);
     }
+    else
+    {
+        // If the attraction is not operating, we want to convey why. Different
+        // reasons have differing levels of importance.
 
-    // Draw a little timestamp to the bottom of the display
-    display.setCursor(1, 296 - 8);
-    display.print(String(millis() / 60000).c_str());
+        // If the attraction is DOWN, this means its regular operation has been
+        // interrupted. It's important to show this.
+        String status = attr.getStatus();
+        if (status == "DOWN")
+        {
+            status = "DWN";
+        }
+        else
+        {
+            status = "---";
+        }
 
-    // Tell the display to update
-    display.display();
-}
-
-void DisplayManager::drawDataColumn(int xOffset, int yOffset, const char *label)
-{
-    const int TEXT_MARGIN = 3;
-
-    // Draw our header label
-    display.setFont();
-    display.setTextSize(1);
-    display.setCursor(xOffset + TEXT_MARGIN, yOffset + TEXT_MARGIN);
+        display.print(status);
+    }
     display.setTextColor(EPD_BLACK);
-    display.setTextWrap(false);
-    display.print(label);
 
-    // Draw the little box underneath
-    display.fillRect(xOffset + TEXT_MARGIN, yOffset + TEXT_MARGIN * 2 + 8, 64, 3, EPD_RED);
+    // Draw our spacer
+    display.print("|");
 
-    // TODO: Draw everything else
+    // Draw the label
+    display.print(attr.getName());
 }
