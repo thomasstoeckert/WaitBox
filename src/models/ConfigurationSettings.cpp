@@ -24,6 +24,7 @@ ConfigurationSettings::ConfigurationSettings()
     park2Vector.push_back("480fde8f-fe58-4bfb-b3ab-052a39d4db7c");
     park2Vector.push_back("8d7ccdb1-a22b-4e26-8dc8-65b1938ed5f0");
     park2Vector.push_back("37ae57c5-feaf-4e47-8f27-4b385be200f0");
+    park2Vector.push_back("1e735ffb-4868-47f1-b2cd-2ac1156cd5f0");
 
     // Create filter for Park 3
     park3Vector.push_back("1a2e70d9-50d5-4140-b69e-799e950f7d18");
