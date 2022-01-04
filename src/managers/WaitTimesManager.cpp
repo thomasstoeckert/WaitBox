@@ -1,7 +1,6 @@
 #include "WaitTimesManager.h"
 
-WaitTimesManager::WaitTimesManager() :
-    webResponseBuffer(32000), parkWaitTimes{ParkWaitTime(), ParkWaitTime(), ParkWaitTime(), ParkWaitTime()}
+WaitTimesManager::WaitTimesManager() : webResponseBuffer(16000), parkWaitTimes{ParkWaitTime(), ParkWaitTime(), ParkWaitTime(), ParkWaitTime()}
 {
     // Prepare our JSON filter
 
@@ -22,33 +21,34 @@ bool WaitTimesManager::updateData(ConfigurationSettings configSettings)
 
     // For each park...
     int numParks = configSettings.getNumParks();
-    for(int i = 0; i < numParks; i++)
+    for (int i = 0; i < numParks; i++)
     {
         // Fetch the data from the web, parsed into JSON
-        fetchParkWaits(configSettings.getSelectedParkID(i).c_str());
+        if (!fetchParkWaits(configSettings.getSelectedParkID(i).c_str()))
+        {
+            Serial.printf("> An error occured while attempting to fetch park information for park %s\n", configSettings.getSelectedParkID(i).c_str());
+            continue;
+        }
 
         ////// Move that into our data structures //////
-        
+
         // Parse it into a park
         ParkWaitTime parsedPark = ParkWaitTime(webResponseBuffer.as<JsonObject>(), configSettings, i);
 
-        // Print out our response
-        Serial.println("Wait Times Object Result: ");
-        Serial.printf("\tParkName: %s\n", parsedPark.getName().c_str());
-        Serial.printf("\tNumAttractions: %d\n", parsedPark.getNumAttractions());
+        Serial.printf("> [Park %d (Name: %s)]: Saved %d attractions\n", i, parsedPark.getName().c_str(), parsedPark.getNumAttractions());
 
         // Store this park object
         parkWaitTimes[i] = parsedPark;
     }
 
-    
     return true;
 }
 
-bool WaitTimesManager::fetchParkWaits(const char* parkID)
+bool WaitTimesManager::fetchParkWaits(const char *parkID)
 {
     // If we're not connected to WiFi, this is going to fail.
-    if(WiFi.status() != WL_CONNECTED) return false;
+    if (WiFi.status() != WL_CONNECTED)
+        return false;
 
     String builtURL = String(baseURL);
     builtURL += slugEntity + String(parkID) + slugLive;
@@ -59,27 +59,28 @@ bool WaitTimesManager::fetchParkWaits(const char* parkID)
 
     // Configure various parts of the request
     // HTTP1.0 required for a stream output
-    http.useHTTP10(true); 
+    http.useHTTP10(true);
     client.setCACert(root_ca);
     http.begin(client, builtURL);
     http.setRedirectLimit(32);
     http.setFollowRedirects(HTTPC_FORCE_FOLLOW_REDIRECTS);
 
-    Serial.println("Sending park wait request...");
-
     int statusCode = http.sendRequest("GET");
 
-    Serial.printf("Got our response code of %d\n", statusCode);
-    Serial.println("Request sent. Parsing...");
-
-    DeserializationError error = deserializeJson(webResponseBuffer, 
-        http.getStream(), DeserializationOption::Filter(attractionResultFilter), DeserializationOption::NestingLimit(10));
-
-    Serial.println("Parse complete.");
-
-    if(error)
+    if(statusCode != 200)
     {
-        Serial.print("DeserializedJSON Failed: ");
+        Serial.print("> HTTP Error: ");
+        Serial.println(statusCode);
+        http.end();
+        return false;
+    }
+
+    DeserializationError error = deserializeJson(webResponseBuffer,
+                                                 http.getStream(), DeserializationOption::Filter(attractionResultFilter), DeserializationOption::NestingLimit(10));
+
+    if (error)
+    {
+        Serial.print("> DeserializedJSON Failed: ");
         Serial.println(error.c_str());
         http.end();
         return false;
