@@ -53,8 +53,20 @@ bool ConfigurationManager::saveSettings(String settingString)
 {
     // Parse this string as a JSON document
     DynamicJsonDocument configurationDocument(4096);
+    DeserializationError error = deserializeJson(configurationDocument, settingString.c_str());
+
+    if(error) 
+    {
+        Serial.println("Error while parsing config string: ");
+        Serial.println(error.c_str());
+        return false;
+    }
 
     // If valid, save it to our file system
+    fileSystem.saveToFile("/config.json", configurationDocument);
+
+    // And parse it into our configuration settings
+    configurationSettings = ConfigurationSettings(configurationDocument.as<JsonObject>());
 
     // Return true if success, otherwise, false.
     return true;

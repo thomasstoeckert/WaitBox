@@ -14,7 +14,7 @@ void DisplayManager::setup()
     display.setRotation(1);
 }
 
-void DisplayManager::drawWaits(std::array<ParkWaitTime, 4> waitTimes)
+void DisplayManager::drawWaits(std::vector<ParkWaitTime> waitTimes)
 {
     // Clear the buffer
     display.clearBuffer();
@@ -29,7 +29,7 @@ void DisplayManager::drawWaits(std::array<ParkWaitTime, 4> waitTimes)
     display.setTextColor(EPD_BLACK);
     display.setTextWrap(false);
 
-    int numParks = 4;
+    int numParks = waitTimes.size();
     int currentRowNumber = 1;
     for (int i = 0; i < numParks; i++)
     {

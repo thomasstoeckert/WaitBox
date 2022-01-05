@@ -18,7 +18,7 @@ class DisplayManager
         DisplayManager();
         void setup();
 
-        void drawWaits(std::array<ParkWaitTime, 4> waitTimes);
+        void drawWaits(std::vector<ParkWaitTime> waitTimes);
 
     private:
         ThinkInk_290_Tricolor_Z10 display;

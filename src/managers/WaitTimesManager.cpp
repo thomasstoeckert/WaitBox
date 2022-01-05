@@ -19,6 +19,9 @@ bool WaitTimesManager::updateData(ConfigurationSettings configSettings)
     // Fetch data from our selected parks/attractions, feeding them
     // into our data structures.
 
+    // Clear our parkWaitTimes structure
+    parkWaitTimes.clear();
+
     // For each park...
     int numParks = configSettings.getNumParks();
     for (int i = 0; i < numParks; i++)
@@ -38,7 +41,7 @@ bool WaitTimesManager::updateData(ConfigurationSettings configSettings)
         Serial.printf("> [Park %d (Name: %s)]: Saved %d attractions\n", i, parsedPark.getName().c_str(), parsedPark.getNumAttractions());
 
         // Store this park object
-        parkWaitTimes[i] = parsedPark;
+        parkWaitTimes.push_back(parsedPark);
     }
 
     return true;
@@ -92,7 +95,7 @@ bool WaitTimesManager::fetchParkWaits(const char *parkID)
     return true;
 }
 
-std::array<ParkWaitTime, 4> WaitTimesManager::getWaitTimes()
+std::vector<ParkWaitTime> WaitTimesManager::getWaitTimes()
 {
     return parkWaitTimes;
 }

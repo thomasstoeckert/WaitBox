@@ -14,7 +14,7 @@ public:
     WaitTimesManager();
     void init();
     bool updateData(ConfigurationSettings configSettings);
-    std::array<ParkWaitTime, 4> getWaitTimes();
+    std::vector<ParkWaitTime> getWaitTimes();
 
 private:
     // This larger JSON document holds the responses from our web requests
@@ -27,9 +27,7 @@ private:
     StaticJsonDocument<256> attractionResultFilter;
 
     // WaitTimes Cache
-    // We hold up to four park objects at a time
-    const int numParks = 4;
-    std::array<ParkWaitTime, 4> parkWaitTimes;
+    std::vector<ParkWaitTime> parkWaitTimes;
 
     // Utility Functions
     bool fetchParkWaits(const char* parkID);
