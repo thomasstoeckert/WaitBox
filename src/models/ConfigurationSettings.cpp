@@ -3,9 +3,7 @@
 ConfigurationSettings::ConfigurationSettings()
 {
     // Establish default configuration settings
-    showAttractions = true;
-    showShows = false;
-    showOthers = false;
+    refreshFrequency = 5;
 
     // Create our park filters
     parkFilters.push_back("75ea578a-adc8-4116-a54d-dccb60765ef9");
@@ -50,19 +48,37 @@ ConfigurationSettings::ConfigurationSettings()
     attractionFilters.push_back(park4Vector);
 }
 
-bool ConfigurationSettings::getShowAttractions()
+ConfigurationSettings::ConfigurationSettings(JsonObject configurationData)
 {
-    return showAttractions;
-}
+    // Base: Get our boolean configuration information
+    refreshFrequency = configurationData["refreshFrequency"].as<int>();
 
-bool ConfigurationSettings::getShowShows()
-{
-    return showShows;
-}
+    // For each park...
+    JsonArray parks = configurationData["parks"].as<JsonArray>();
+    int parksArrayLength = parks.size();
+    for(int i = 0; i < parksArrayLength; i++)
+    {
+        JsonObject park = parks[i].as<JsonObject>();
+        // Get the Park's ID, push it to the vector
+        String parkID = String(park["parkID"].as<const char*>());
+        parkFilters.push_back(parkID);
 
-bool ConfigurationSettings::getShowOthers()
-{
-    return showOthers;
+        // Go through the attractions
+        JsonArray attractions = park["attractions"];
+        int attractionsArrayLength = attractions.size();
+
+        // Create a vector of attractions for this park
+        std::vector<String> attractionsVector;
+        for(int j = 0; j < attractionsArrayLength; j++)
+        {
+            attractionsVector.push_back(String(attractions[j].as<const char*>()));
+        }
+
+        // Push that array list to the back
+        attractionFilters.push_back(attractionsVector);
+    }
+
+    // We are done.
 }
 
 std::vector<String> ConfigurationSettings::getAttractionFilterForPark(int parkIndex)
@@ -73,6 +89,11 @@ std::vector<String> ConfigurationSettings::getAttractionFilterForPark(int parkIn
 int ConfigurationSettings::getNumParks()
 {
     return parkFilters.size();
+}
+
+int ConfigurationSettings::getRefreshFrequency()
+{
+    return refreshFrequency;
 }
 
 String ConfigurationSettings::getSelectedParkID(int parkIndex)

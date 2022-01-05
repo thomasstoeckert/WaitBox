@@ -40,30 +40,8 @@ ParkWaitTime::ParkWaitTime(JsonObject jsonData, ConfigurationSettings configSett
         JsonObject singleAttractionData = attractionData[i].as<JsonObject>();
         AttractionWaitTime parsedAttraction = AttractionWaitTime(singleAttractionData);
 
-        // Our parse settings
-
-        String parsedAttractionType = parsedAttraction.getType();
-
-        // If we're an attraction, and attractions are disabled, skip
-        if (parsedAttractionType == TYPE_ATTRACTION &&
-            !configSettings.getShowAttractions())
-        {
-            continue;
-        };
-
-        // If we're a show, and shows are disabled, skip
-        if (parsedAttractionType == TYPE_SHOW &&
-            !configSettings.getShowShows())
-        {
-            continue;
-        };
-
-        // If we're neither a show or attraction, and others are disabled, skip
-        if (parsedAttractionType != TYPE_ATTRACTION &&
-            parsedAttractionType != TYPE_SHOW && !configSettings.getShowOthers())
-        {
-            continue;
-        };
+        // Filter out things that are not attractions
+        if (parsedAttraction.getType() != "ATTRACTION") continue;
 
         // Check against this attraction's ID
         if (attractionFilters.size() > 0)

@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <WiFiManager.h>
+#include <TaskScheduler.h>
 
 // Project imports
 #include "managers/ConfigurationManager.h"
@@ -14,6 +15,46 @@ ConfigurationManager configurationManager;
 DisplayManager       displayManager;
 WiFiManager          wifiManager;
 WaitTimesManager     waitTimesManager;
+
+// Wifi Configuration Parameters
+WiFiManagerParameter configParameter("config", "Paste Configuration Below:", configurationManager.configurationString, 2048);
+
+// Task Scheduler Definitions
+Scheduler runner;
+
+// Task Definitions (with defaults)
+void updateCallback();
+Task updateTask(SLEEP_MINUTES(5), -1, updateCallback);
+
+void updateCallback()
+{
+    unsigned long minuteTimestamp = millis() / 60000;
+    
+    Serial.printf("\n[%lu] Waking up from sleep\n", minuteTimestamp);
+
+    ConfigurationSettings latestSettings = configurationManager.getCurrentSettings();
+
+    // Fetch the latest wait times information from the server
+    Serial.printf("[%lu] Fetching updates information from the server\n", minuteTimestamp);
+    waitTimesManager.updateData(latestSettings);
+
+    std::array<ParkWaitTime, 4> latestWaits = waitTimesManager.getWaitTimes();
+
+    // Update the display
+    Serial.printf("[%lu] Refreshing display with latest information\n", minuteTimestamp);
+    //displayManager.drawDummyScreen();
+    displayManager.drawWaits(latestWaits);
+
+    // Go back to sleep for three minutes
+    Serial.printf("[%lu] Fixed update complete. Going back to sleep.\n", minuteTimestamp);
+    delay(SLEEP_MINUTES(latestSettings.getRefreshFrequency()));
+}
+
+void saveConfigCallback() 
+{
+    // Tell our configuration manager to save the configuration data
+    //configurationManager.saveSettings(String(configParameter.getValue()));
+}
 
 void setup() 
 {
@@ -30,33 +71,29 @@ void setup()
     // Configure Display
     displayManager.setup();
 
-    // Start the WiFi Manager
+    // Config and establish the wifi manager
+    wifiManager.addParameter(&configParameter);
+    wifiManager.setSaveConfigCallback(saveConfigCallback);
+
+    // Just for testing
     wifiManager.autoConnect("Wait Times Box", "waittimes"); // TODO: make proper password
+
+    // Configure our task
+    ConfigurationSettings settings = configurationManager.getCurrentSettings();
+    updateTask.setInterval(SLEEP_MINUTES(settings.getRefreshFrequency()));
 
     // Fetch initial data for the Wait Times Manager
     waitTimesManager.init();
+
+    // Establish our runner
+    runner.init();
+
+    // Add and run our primary task
+    runner.addTask(updateTask);
+    updateTask.enable();
 }
 
 void loop()
 {
-    const char* timeString = String(millis() / 60000).c_str();
-    // Every 180s (three minutes)...
-    Serial.printf("\n[%s] Waking up from sleep\n", timeString);
-
-    ConfigurationSettings latestSettings = configurationManager.getCurrentSettings();
-
-    // Fetch the latest wait times information from the server
-    Serial.printf("[%s] Fetching updates information from the server\n", timeString);
-    waitTimesManager.updateData(latestSettings);
-
-    std::array<ParkWaitTime, 4> latestWaits = waitTimesManager.getWaitTimes();
-
-    // Update the display
-    Serial.printf("[%s] Refreshing display with latest information\n", timeString);
-    //displayManager.drawDummyScreen();
-    displayManager.drawWaits(latestWaits);
-
-    // Go back to sleep for three minutes
-    Serial.printf("[%s] Fixed update complete. Going back to sleep.\n", timeString);
-    delay(SLEEP_MINUTES(5));
+    runner.execute();
 }

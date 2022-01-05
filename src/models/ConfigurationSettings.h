@@ -1,24 +1,22 @@
 #pragma once
 
 #include <Arduino.h>
+#include <ArduinoJson.h>
 
 class ConfigurationSettings
 {
     public:
         ConfigurationSettings();
+        ConfigurationSettings(JsonObject configurationData);
 
-        bool getShowAttractions();
-        bool getShowShows();
-        bool getShowOthers();
+        int getRefreshFrequency();
 
         int getNumParks();
         String getSelectedParkID(int parkIndex);
         
         std::vector<String> getAttractionFilterForPark(int parkIndex);
     private:
-        bool showAttractions;
-        bool showShows;
-        bool showOthers;
+        int refreshFrequency;
 
         std::vector<String> parkFilters;
         std::vector<std::vector<String>> attractionFilters;
