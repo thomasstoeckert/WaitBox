@@ -10,6 +10,7 @@
 #include "models/ConfigurationSettings.h"
 
 #define SLEEP_MINUTES(minutes) (minutes * 60 * 1000)
+#define PIN_RESET_BUTTON 14
 
 ConfigurationManager configurationManager;
 DisplayManager       displayManager;
@@ -19,13 +20,26 @@ WaitTimesManager     waitTimesManager;
 // Wifi Configuration Parameters
 WiFiManagerParameter configParameter("config", "Paste Configuration Below:", configurationManager.configurationString, 2048);
 
+// WiFi Manager Callbacks
+void configModeCallback(WiFiManager *localWiFiManager);
+void configSaveSettingsCallback();
+
 // Task Scheduler Definitions
 Scheduler runner;
 
 // Task Definitions (with defaults)
 void updateCallback();
-void saveConfigCallback();
+void resetConfigurationCallback();
 Task updateTask(SLEEP_MINUTES(5), -1, updateCallback);
+Task resetConfiguration(TASK_IMMEDIATE, -1, resetConfigurationCallback);
+
+
+void IRAM_ATTR resetButtonISR()
+{
+    Serial.println("Hey - ISR");
+    resetConfiguration.restart();
+    resetConfiguration.enable();
+}
 
 void setup() 
 {
@@ -36,6 +50,10 @@ void setup()
     Serial.println("WaitTimes Box Project - Beginning Setup");
     Serial.println("");
 
+    // Establish our interrupt
+    pinMode(PIN_RESET_BUTTON, INPUT);
+    attachInterrupt(digitalPinToInterrupt(PIN_RESET_BUTTON), resetButtonISR, FALLING);
+
     // Load Settings
     configurationManager.loadSettings();
 
@@ -44,7 +62,8 @@ void setup()
 
     // Config and establish the wifi manager
     wifiManager.addParameter(&configParameter);
-    wifiManager.setSaveConfigCallback(saveConfigCallback);
+    wifiManager.setSaveConfigCallback(configSaveSettingsCallback);
+    wifiManager.setAPCallback(configModeCallback);
 
     // Just for testing
     wifiManager.autoConnect("Wait Times Box", "waittimes"); // TODO: make proper password
@@ -59,8 +78,11 @@ void setup()
     // Establish our runner
     runner.init();
 
+    // Add our reset task
+
     // Add and run our primary task
     runner.addTask(updateTask);
+    runner.addTask(resetConfiguration);
     updateTask.enable();
 }
 
@@ -90,11 +112,41 @@ void updateCallback()
 
     // Go back to sleep for three minutes
     Serial.printf("[%lu] Fixed update complete. Going back to sleep.\n", minuteTimestamp);
-    delay(SLEEP_MINUTES(latestSettings.getRefreshFrequency()));
 }
 
-void saveConfigCallback() 
+void configModeCallback(WiFiManager *localWiFiManager)
+{
+    // Our system is in configuration mode. Go through and print out
+    // the configuration IP into serial, and also prepare our display
+    Serial.println("[WiFiManager] Entering Configuration Mode");
+    //Serial.println("")
+    
+}
+
+void configSaveSettingsCallback() 
 {
     // Tell our configuration manager to save the configuration data
     configurationManager.saveSettings(String(configParameter.getValue()));
+
+    // Enable our primary task (if it isn't already)
+    updateTask.enableIfNot();
+}
+
+unsigned long lastRunCallback = 0;
+void resetConfigurationCallback()
+{
+    Serial.println("Hey uh so it started");
+
+    // Do our software debouncing
+    unsigned long now = millis();
+    if(now - lastRunCallback <= 250) return;
+    lastRunCallback = now;
+
+    Serial.println("Hey - Reset Configuration Callback");
+
+    // Tell the wifi manager to reset its settings
+    wifiManager.resetSettings();
+    
+    // Restart the device I guess
+    ESP.restart();
 }

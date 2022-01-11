@@ -58,13 +58,13 @@ void DisplayManager::drawWaits(std::vector<ParkWaitTime> waitTimes)
             display.fillRect(1, TEXT_HEIGHT * (currentRowNumber++) + MARGIN + i * ROW_MARGIN + 4, 126, 2, EPD_RED);
         }
     }
-
+/* 
     // Draw a little timestamp to the bottom of the display
     display.setCursor(1, 296 - 8);
     display.print("up: ");
     display.print(String(millis() / 60000).c_str());
     display.print(" minutes");
-
+ */
     // Tell the display to update
     display.display();
 }
